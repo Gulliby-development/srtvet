@@ -30,7 +30,7 @@ go build
 
 ```
 usage: srtvet check [--max-line N] FILE...
-       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--out FILE] FILE
+       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE
 ```
 
 `srtvet --help` (as the only argument) prints these two lines.
@@ -125,13 +125,14 @@ and ends with `5 problems in 1 file`.
 output, or to the file named by `--out FILE`. The steps run in this order, each
 only when its option is given, except the last, which always runs:
 
-1. `--drop-empty` removes the cues that have no text lines.
-2. `--stretch RATIO` multiplies every start and end by the ratio, rounded half
+1. `--strip-tags` removes the formatting tags from the text (see below).
+2. `--drop-empty` removes cues that have no text lines.
+3. `--stretch RATIO` multiplies every start and end by the ratio, rounded half
    up to whole milliseconds.
-3. `--shift DURATION` adds the duration to every start and end.
-4. `--sort` sorts the cues by start, then by end; equal cues keep their file
+4. `--shift DURATION` adds the duration to every start and end.
+5. `--sort` sorts the cues by start, then by end; equal cues keep their file
    order.
-5. The cues are renumbered 1, 2, 3, ... in their final order.
+6. The cues are renumbered 1, 2, 3, ... in their final order.
 
 After stretching and shifting, a cue that would start below `00:00:00,000` or
 end above `99:59:59,999` stops the run with
@@ -190,6 +191,54 @@ Second line.
 2
 00:01:12,490 --> 00:01:14,617
 Third, but listed first.
+```
+
+## Removing formatting tags
+
+`--strip-tags` removes opening and closing `<i>`, `<b>`, `<u>`, `<s>` and `<font>` tags, without regard to case. Opening tags may have attributes after spaces or tabs. Override blocks such as `{\an8}` and `{\pos(10,20)\i1}` are removed.
+
+Forms that stay include `<br>`, `<ii>`, `<fonts>`, `<i/>`, `</ i>`, `<hello>`, unclosed `<i`, `2 < 3`, `<3`, `{note}` and `{}`. Other text and spaces are kept as written. Text lines that become empty are removed; whitespace-only lines remain. `--drop-empty` removes any cue left without text.
+
+Worked example, `tags.srt`:
+
+```
+1
+00:00:01,000 --> 00:00:02,000
+{\an8}<i>Hello</i> <font color="#ff0000">there</font>.
+
+2
+00:00:03,000 --> 00:00:04,000
+<b></b>
+<U>Two</U> lines, 2 < 3 and <3 {note}
+
+3
+00:00:05,000 --> 00:00:06,000
+<i>
+{\i1}
+</i>
+
+4
+00:00:07,000 --> 00:00:08,000
+Plain <hello> <br> <s >x</S>
+```
+
+`srtvet fix --strip-tags tags.srt` prints this and exits with code 0:
+
+```
+1
+00:00:01,000 --> 00:00:02,000
+Hello there.
+
+2
+00:00:03,000 --> 00:00:04,000
+Two lines, 2 < 3 and <3 {note}
+
+3
+00:00:05,000 --> 00:00:06,000
+
+4
+00:00:07,000 --> 00:00:08,000
+Plain <hello> <br> x
 ```
 
 ## Exit codes

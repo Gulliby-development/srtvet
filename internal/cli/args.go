@@ -21,6 +21,7 @@ const (
 	optOut       = "--out"
 	optSort      = "--sort"
 	optDropEmpty = "--drop-empty"
+	optStripTags = "--strip-tags"
 
 	// defaultMaxLine is the line-length limit without --max-line.
 	defaultMaxLine = 42
@@ -48,6 +49,7 @@ type options struct {
 	hasStretch bool
 	sort       bool
 	dropEmpty  bool
+	stripTags  bool
 	out        string
 	hasOut     bool
 }
@@ -93,6 +95,8 @@ func parseArgs(args []string) (options, error) {
 			opts.sort = true
 		case cmd == cmdFix && arg == optDropEmpty:
 			opts.dropEmpty = true
+		case cmd == cmdFix && arg == optStripTags:
+			opts.stripTags = true
 		default:
 			return options{}, fmt.Errorf("srtvet: unknown option \"%s\"", arg)
 		}
