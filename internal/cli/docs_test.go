@@ -22,7 +22,7 @@ func TestReadmeContents(t *testing.T) {
 		want string
 	}{
 		{"usage line check", "usage: srtvet check [--max-line N] FILE..."},
-		{"usage line fix", "       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--out FILE] FILE"},
+		{"usage line fix", "       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE"},
 
 		{"check output SV003", "movie.srt:5: SV003 starts at 00:00:03,000, before the previous cue ends at 00:00:03,500"},
 		{"check output SV001", "movie.srt:9: SV001 cue number 4, expected 3"},
