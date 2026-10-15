@@ -9,11 +9,11 @@ import (
 	"github.com/Gulliby-development/srtvet/internal/srt"
 )
 
-// Finding is one problem reported by Check.
+// Finding is one problem reported by Check or CheckAll.
 type Finding struct {
 	// Line is the line number the finding points at.
 	Line int
-	// Code is the rule code, SV001 to SV006.
+	// Code is the rule code, SV001 to SV007.
 	Code string
 	// Message is the text after the code.
 	Message string
@@ -23,6 +23,13 @@ type Finding struct {
 // cue order and, inside a cue, in code order SV001 to SV006. A maxLine
 // of 0 turns the line-length rule off.
 func Check(cues []srt.Cue, maxLine int) []Finding {
+	return CheckAll(cues, maxLine, 0)
+}
+
+// CheckAll runs the six Check rules and, when maxCPS is positive, the
+// reading-speed rule SV007. Findings are in cue order and, inside a cue,
+// SV007 follows SV006. A maxLine of 0 turns the line-length rule off.
+func CheckAll(cues []srt.Cue, maxLine, maxCPS int) []Finding {
 	var out []Finding
 	for i, c := range cues {
 		add := func(line int, code, message string) {
@@ -51,12 +58,22 @@ func Check(cues []srt.Cue, maxLine int) []Finding {
 		if len(c.Text) == 0 {
 			add(c.Line, "SV005", "no text")
 		}
-		if maxLine == 0 {
-			continue
+		if maxLine > 0 {
+			for k, line := range c.Text {
+				if n := utf8.RuneCountInString(line); n > maxLine {
+					add(c.TextLine+k, "SV006", fmt.Sprintf("line %d has %d characters, the limit is %d", k+1, n, maxLine))
+				}
+			}
 		}
-		for k, line := range c.Text {
-			if n := utf8.RuneCountInString(line); n > maxLine {
-				add(c.TextLine+k, "SV006", fmt.Sprintf("line %d has %d characters, the limit is %d", k+1, n, maxLine))
+		if maxCPS > 0 && len(c.Text) > 0 && c.End > c.Start {
+			duration := c.End - c.Start
+			var characters int64
+			for _, line := range c.Text {
+				characters += int64(utf8.RuneCountInString(line))
+			}
+			if characters*1000 > int64(maxCPS)*duration {
+				tenths := (characters*10000 + duration/2) / duration
+				add(c.Line, "SV007", fmt.Sprintf("reading speed %d.%d characters per second, the limit is %d", tenths/10, tenths%10, maxCPS))
 			}
 		}
 	}

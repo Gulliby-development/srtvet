@@ -29,7 +29,7 @@ go build
 ## Usage
 
 ```
-usage: srtvet check [--max-line N] FILE...
+usage: srtvet check [--max-line N] [--max-cps N] FILE...
        srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE
 ```
 
@@ -74,12 +74,59 @@ line. "Previous" is the cue before in the file.
 | SV004 | `starts at T1, before the previous cue starts at T2` | the start is before the previous start |
 | SV005 | `no text` | the cue has no text lines |
 | SV006 | `line K has C characters, the limit is L` | text line K of the cue has more than L Unicode code points |
+| SV007 | `reading speed R characters per second, the limit is L` | with `--max-cps L`: the cue has text, ends after it starts and is read faster than L characters per second |
 
 A cue gets SV004 or SV003, never both. Tags such as `<i>` count like any other
 text for SV006.
 
 `--max-line N` sets the limit L of SV006: one to three digits, 0 to 200, the
 default is 42, and 0 turns SV006 off.
+
+`--max-cps N` turns on SV007, the reading speed rule: one to three digits, 0
+to 100, the default is 0, which leaves SV007 off. The speed of a cue is the
+number of Unicode code points in all its text lines (line ends not counted;
+tags count like any other text) divided by its duration in seconds. A cue is
+reported when its speed is above N, so exactly N is fine; a cue without text
+and a cue whose end is not after its start are not checked. R in the message is
+the speed rounded half up to one decimal place. SV007 stands after SV006 among
+the findings of a cue and points at the cue-number line. Only `check` takes the
+option.
+
+Worked example, `fast.srt`:
+
+```
+1
+00:00:01,000 --> 00:00:02,000
+Hello there, how are you?
+
+2
+00:00:02,500 --> 00:00:04,500
+Short.
+
+3
+00:00:05,000 --> 00:00:05,400
+Go now!
+
+4
+00:00:06,000 --> 00:00:07,000
+<i>Two lines</i>
+of fast text here
+
+5
+00:00:08,000 --> 00:00:09,000
+Seventeen chars!!
+```
+
+`srtvet check --max-cps 17 fast.srt` prints this and exits with code 1:
+
+```
+fast.srt:1: SV007 reading speed 25.0 characters per second, the limit is 17
+fast.srt:9: SV007 reading speed 17.5 characters per second, the limit is 17
+fast.srt:13: SV007 reading speed 33.0 characters per second, the limit is 17
+3 problems in 1 file
+```
+
+Without `--max-cps` the same file gives `ok`.
 
 The summary line is `N problems in M files` (M counts the files with at least
 one finding), or the single line `ok` when there is no finding.

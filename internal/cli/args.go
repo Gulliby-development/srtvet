@@ -16,6 +16,7 @@ const (
 	cmdFix   = "fix"
 
 	optMaxLine   = "--max-line"
+	optMaxCPS    = "--max-cps"
 	optShift     = "--shift"
 	optStretch   = "--stretch"
 	optOut       = "--out"
@@ -27,11 +28,13 @@ const (
 	defaultMaxLine = 42
 	// maxMaxLine is the largest accepted --max-line value.
 	maxMaxLine = 200
+	// maxMaxCPS is the largest accepted --max-cps value.
+	maxMaxCPS = 100
 )
 
 // valueOptions lists, per command, the options that take a value.
 var valueOptions = map[string]map[string]bool{
-	cmdCheck: {optMaxLine: true},
+	cmdCheck: {optMaxLine: true, optMaxCPS: true},
 	cmdFix:   {optShift: true, optStretch: true, optOut: true},
 }
 
@@ -43,6 +46,7 @@ type options struct {
 	help       bool
 	files      []string
 	maxLine    int
+	maxCPS     int
 	shift      int64
 	hasShift   bool
 	stretch    ops.Ratio
@@ -109,6 +113,13 @@ func parseArgs(args []string) (options, error) {
 				return options{}, invalidValue(optMaxLine, v)
 			}
 			opts.maxLine = n
+		}
+		if v, given := raw[optMaxCPS]; given {
+			n, err := strconv.Atoi(v)
+			if !maxLineRE.MatchString(v) || err != nil || n > maxMaxCPS {
+				return options{}, invalidValue(optMaxCPS, v)
+			}
+			opts.maxCPS = n
 		}
 		if len(opts.files) < 1 {
 			return options{}, fmt.Errorf("srtvet: check needs at least one FILE")
