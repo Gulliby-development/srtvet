@@ -55,7 +55,7 @@ const oneFindingSRT = "2\n" +
 	"00:00:01,000 --> 00:00:02,000\n" +
 	"hi\n"
 
-const usageText = "usage: srtvet check [--max-line N] FILE...\n" +
+const usageText = "usage: srtvet check [--max-line N] [--max-cps N] FILE...\n" +
 	"       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE\n"
 
 var clipFixArgs = []string{"fix", "--stretch", "25/23.976", "--shift", "-0.5s", "--sort", "--drop-empty"}

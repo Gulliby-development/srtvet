@@ -21,7 +21,7 @@ func TestReadmeContents(t *testing.T) {
 		name string
 		want string
 	}{
-		{"usage line check", "usage: srtvet check [--max-line N] FILE..."},
+		{"usage line check", "usage: srtvet check [--max-line N] [--max-cps N] FILE..."},
 		{"usage line fix", "       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE"},
 
 		{"check output SV003", "movie.srt:5: SV003 starts at 00:00:03,000, before the previous cue ends at 00:00:03,500"},

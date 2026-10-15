@@ -11,7 +11,7 @@ import (
 	"github.com/Gulliby-development/srtvet/internal/srt"
 )
 
-const usage = "usage: srtvet check [--max-line N] FILE...\n" +
+const usage = "usage: srtvet check [--max-line N] [--max-cps N] FILE...\n" +
 	"       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE\n"
 
 // Exit codes of Run.
@@ -64,7 +64,7 @@ func runCheck(opts options, stdin io.Reader, out *bytes.Buffer) (int, error) {
 	}
 	problems, files := 0, 0
 	for i, cues := range parsed {
-		findings := ops.Check(cues, opts.maxLine)
+		findings := ops.CheckAll(cues, opts.maxLine, opts.maxCPS)
 		if len(findings) > 0 {
 			files++
 		}
