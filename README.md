@@ -75,6 +75,7 @@ line. "Previous" is the cue before in the file.
 | SV005 | `no text` | the cue has no text lines |
 | SV006 | `line K has C characters, the limit is L` | text line K of the cue has more than L Unicode code points |
 | SV007 | `reading speed R characters per second, the limit is L` | with `--max-cps L`: the cue has text, ends after it starts and is read faster than L characters per second |
+| SV008 | `same start, end and text as the previous cue` | the cue has text and its start, end and every text line equal those of the previous cue |
 
 A cue gets SV004 or SV003, never both. Tags such as `<i>` count like any other
 text for SV006.
@@ -127,6 +128,32 @@ fast.srt:13: SV007 reading speed 33.0 characters per second, the limit is 17
 ```
 
 Without `--max-cps` the same file gives `ok`.
+
+SV008 finds a cue pasted twice in a row. It compares text lines exactly, so case and spaces count, and looks only at the previous cue. A cue without text is never reported. SV008 comes last among a cue's findings and points at the cue-number line. A copy of the previous cue also gets SV003 because it starts before the previous cue ends.
+
+Worked example, `dup.srt`:
+
+```
+1
+00:00:01,000 --> 00:00:02,000
+Hello.
+
+2
+00:00:01,000 --> 00:00:02,000
+Hello.
+
+3
+00:00:03,000 --> 00:00:04,000
+Hello.
+```
+
+`srtvet check dup.srt` prints this and exits with code 1:
+
+```
+dup.srt:5: SV003 starts at 00:00:01,000, before the previous cue ends at 00:00:02,000
+dup.srt:5: SV008 same start, end and text as the previous cue
+2 problems in 1 file
+```
 
 The summary line is `N problems in M files` (M counts the files with at least
 one finding), or the single line `ok` when there is no finding.

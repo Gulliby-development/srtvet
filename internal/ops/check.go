@@ -4,6 +4,7 @@ package ops
 
 import (
 	"fmt"
+	"slices"
 	"unicode/utf8"
 
 	"github.com/Gulliby-development/srtvet/internal/srt"
@@ -13,22 +14,23 @@ import (
 type Finding struct {
 	// Line is the line number the finding points at.
 	Line int
-	// Code is the rule code, SV001 to SV007.
+	// Code is the rule code, SV001 to SV008.
 	Code string
 	// Message is the text after the code.
 	Message string
 }
 
-// Check runs the six rules on the cues of one file. The findings are in
-// cue order and, inside a cue, in code order SV001 to SV006. A maxLine
-// of 0 turns the line-length rule off.
+// Check runs SV001 to SV006 and SV008 on the cues of one file. The findings
+// are in cue order and, inside a cue, in code order. SV008 comes after the
+// other findings of its cue. A maxLine of 0 turns the line-length rule off.
 func Check(cues []srt.Cue, maxLine int) []Finding {
 	return CheckAll(cues, maxLine, 0)
 }
 
-// CheckAll runs the six Check rules and, when maxCPS is positive, the
+// CheckAll runs the Check rules and, when maxCPS is positive, the
 // reading-speed rule SV007. Findings are in cue order and, inside a cue,
-// SV007 follows SV006. A maxLine of 0 turns the line-length rule off.
+// SV007 follows SV006 and SV008 comes last. A maxLine of 0 turns the
+// line-length rule off.
 func CheckAll(cues []srt.Cue, maxLine, maxCPS int) []Finding {
 	var out []Finding
 	for i, c := range cues {
@@ -74,6 +76,12 @@ func CheckAll(cues []srt.Cue, maxLine, maxCPS int) []Finding {
 			if characters*1000 > int64(maxCPS)*duration {
 				tenths := (characters*10000 + duration/2) / duration
 				add(c.Line, "SV007", fmt.Sprintf("reading speed %d.%d characters per second, the limit is %d", tenths/10, tenths%10, maxCPS))
+			}
+		}
+		if i > 0 && len(c.Text) > 0 {
+			prev := cues[i-1]
+			if c.Start == prev.Start && c.End == prev.End && slices.Equal(c.Text, prev.Text) {
+				add(c.Line, "SV008", "same start, end and text as the previous cue")
 			}
 		}
 	}
