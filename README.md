@@ -30,7 +30,7 @@ go build
 
 ```
 usage: srtvet check [--max-line N] [--max-cps N] FILE...
-       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE
+       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE
 ```
 
 `srtvet --help` (as the only argument) prints these two lines.
@@ -208,6 +208,8 @@ only when its option is given, except the last, which always runs:
    order.
 6. The cues are renumbered 1, 2, 3, ... in their final order.
 
+`--clean-space` is not a numbered step: it runs first, before step 1 (see below).
+
 After stretching and shifting, a cue that would start below `00:00:00,000` or
 end above `99:59:59,999` stops the run with
 `srtvet: cue N: time out of range after retiming` (N is the cue's declared
@@ -313,6 +315,49 @@ Two lines, 2 < 3 and <3 {note}
 4
 00:00:07,000 --> 00:00:08,000
 Plain <hello> <br> x
+```
+
+## Cleaning spaces
+
+`--clean-space` cleans the text lines of every cue (not the timing lines) before any other step of `fix`. It first deletes the invisible characters U+00AD, U+200B, U+2060 and U+FEFF. A *space run* is a maximal sequence of plain spaces (U+0020) and odd spaces; the odd spaces are U+00A0, U+2000 to U+200A, U+202F, U+205F, U+3000, U+0085, U+2028, U+2029 and the carriage return (U+000D). A run that holds at least one odd space becomes one plain space, or nothing when it touches the start or the end of the line; a run of plain spaces only stays as it is. Every other character, a TAB included, ends a run and stays. Text lines that become empty are removed; `--drop-empty` removes any cue left without text.
+
+Worked example, `odd.srt` (each `<U+XXXX>` stands for that one character, `<TAB>` for a TAB):
+
+```
+1
+00:00:01,000 --> 00:00:02,000
+<U+FEFF>Hello<U+00A0><U+00A0>there,
+you <U+200B>know<U+3000>
+
+2
+00:00:03,000 --> 00:00:04,000
+<U+00A0>
+
+3
+00:00:05,000 --> 00:00:06,000
+a<U+2028>b
+x <U+00A0> y
+z  w
+p<TAB><U+00A0>q
+```
+
+`srtvet fix --clean-space odd.srt` prints this and exits with code 0:
+
+```
+1
+00:00:01,000 --> 00:00:02,000
+Hello there,
+you know
+
+2
+00:00:03,000 --> 00:00:04,000
+
+3
+00:00:05,000 --> 00:00:06,000
+a b
+x y
+z  w
+p<TAB> q
 ```
 
 ## Exit codes

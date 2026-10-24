@@ -12,7 +12,7 @@ import (
 )
 
 const usage = "usage: srtvet check [--max-line N] [--max-cps N] FILE...\n" +
-	"       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE\n"
+	"       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE\n"
 
 // Exit codes of Run.
 const (
@@ -88,6 +88,9 @@ func runFix(opts options, stdin io.Reader, out *bytes.Buffer) error {
 	cues, err := readCues(opts.files[0], stdin)
 	if err != nil {
 		return err
+	}
+	if opts.cleanSpace {
+		ops.CleanSpaceLines(cues)
 	}
 	if opts.stripTags {
 		ops.StripTags(cues)

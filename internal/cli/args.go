@@ -15,14 +15,15 @@ const (
 	cmdCheck = "check"
 	cmdFix   = "fix"
 
-	optMaxLine   = "--max-line"
-	optMaxCPS    = "--max-cps"
-	optShift     = "--shift"
-	optStretch   = "--stretch"
-	optOut       = "--out"
-	optSort      = "--sort"
-	optDropEmpty = "--drop-empty"
-	optStripTags = "--strip-tags"
+	optMaxLine    = "--max-line"
+	optMaxCPS     = "--max-cps"
+	optShift      = "--shift"
+	optStretch    = "--stretch"
+	optOut        = "--out"
+	optSort       = "--sort"
+	optDropEmpty  = "--drop-empty"
+	optStripTags  = "--strip-tags"
+	optCleanSpace = "--clean-space"
 
 	// defaultMaxLine is the line-length limit without --max-line.
 	defaultMaxLine = 42
@@ -54,6 +55,7 @@ type options struct {
 	sort       bool
 	dropEmpty  bool
 	stripTags  bool
+	cleanSpace bool
 	out        string
 	hasOut     bool
 }
@@ -101,6 +103,8 @@ func parseArgs(args []string) (options, error) {
 			opts.dropEmpty = true
 		case cmd == cmdFix && arg == optStripTags:
 			opts.stripTags = true
+		case cmd == cmdFix && arg == optCleanSpace:
+			opts.cleanSpace = true
 		default:
 			return options{}, fmt.Errorf("srtvet: unknown option \"%s\"", arg)
 		}
