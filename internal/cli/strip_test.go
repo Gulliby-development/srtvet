@@ -163,7 +163,7 @@ func TestStripTagsReadmeDocumentation(t *testing.T) {
 	}
 	readme := strings.ReplaceAll(string(data), "\r\n", "\n")
 
-	const usageLine = "       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--out FILE] FILE"
+	const usageLine = "       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE"
 	if !strings.Contains(readme, usageLine) {
 		t.Errorf("README.md does not contain the fix usage line %q", usageLine)
 	}
