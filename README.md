@@ -30,7 +30,7 @@ go build
 
 ```
 usage: srtvet check [--max-line N] [--max-cps N] FILE...
-       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE
+       srtvet fix [--shift DURATION] [--stretch RATIO] [--min-duration DURATION] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE
 ```
 
 `srtvet --help` (as the only argument) prints these two lines.
@@ -204,9 +204,11 @@ only when its option is given, except the last, which always runs:
 3. `--stretch RATIO` multiplies every start and end by the ratio, rounded half
    up to whole milliseconds.
 4. `--shift DURATION` adds the duration to every start and end.
-5. `--sort` sorts the cues by start, then by end; equal cues keep their file
+5. `--min-duration DURATION` lengthens the cues that last less than the duration
+   (see below).
+6. `--sort` sorts the cues by start, then by end; equal cues keep their file
    order.
-6. The cues are renumbered 1, 2, 3, ... in their final order.
+7. The cues are renumbered 1, 2, 3, ... in their final order.
 
 `--clean-space` is not a numbered step: it runs first, before step 1 (see below).
 
@@ -267,6 +269,44 @@ Second line.
 2
 00:01:12,490 --> 00:01:14,617
 Third, but listed first.
+```
+
+## Minimum duration
+
+`--min-duration DURATION` makes short cues easier to read. DURATION takes the forms of `--shift` without a sign, from `1ms` up to 60 seconds (`60`, `60s` and `60000ms` are the largest); any other value stops the run with `srtvet: invalid --min-duration "VALUE"`. Only `fix` takes the option.
+
+A cue that lasts less than DURATION gets a later end, so that it lasts DURATION, but the end never passes the start of the next cue in the file when that start is later than the cue's own start. A cue is never shortened, its start never moves, and a cue whose end is not after its start is left as it is. The step runs in file order, after `--shift` and before `--sort`, and the time range check that follows stretching and shifting also covers it.
+
+Worked example, `short.srt`:
+
+```
+1
+00:00:01,000 --> 00:00:01,200
+Hi
+
+2
+00:00:01,800 --> 00:00:03,000
+There
+
+3
+00:00:05,000 --> 00:00:05,100
+End
+```
+
+`srtvet fix --min-duration 1s short.srt` prints this and exits with code 0 (the first cue stops at the start of the second one):
+
+```
+1
+00:00:01,000 --> 00:00:01,800
+Hi
+
+2
+00:00:01,800 --> 00:00:03,000
+There
+
+3
+00:00:05,000 --> 00:00:06,000
+End
 ```
 
 ## Removing formatting tags

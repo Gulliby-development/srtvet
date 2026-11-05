@@ -15,15 +15,17 @@ const (
 	cmdCheck = "check"
 	cmdFix   = "fix"
 
-	optMaxLine    = "--max-line"
-	optMaxCPS     = "--max-cps"
-	optShift      = "--shift"
-	optStretch    = "--stretch"
-	optOut        = "--out"
-	optSort       = "--sort"
-	optDropEmpty  = "--drop-empty"
-	optStripTags  = "--strip-tags"
-	optCleanSpace = "--clean-space"
+	optMaxLine = "--max-line"
+	optMaxCPS  = "--max-cps"
+	optShift   = "--shift"
+	optStretch = "--stretch"
+	// optMinDuration is the fix option that lengthens short cues.
+	optMinDuration = "--min-duration"
+	optOut         = "--out"
+	optSort        = "--sort"
+	optDropEmpty   = "--drop-empty"
+	optStripTags   = "--strip-tags"
+	optCleanSpace  = "--clean-space"
 
 	// defaultMaxLine is the line-length limit without --max-line.
 	defaultMaxLine = 42
@@ -36,7 +38,7 @@ const (
 // valueOptions lists, per command, the options that take a value.
 var valueOptions = map[string]map[string]bool{
 	cmdCheck: {optMaxLine: true, optMaxCPS: true},
-	cmdFix:   {optShift: true, optStretch: true, optOut: true},
+	cmdFix:   {optShift: true, optStretch: true, optMinDuration: true, optOut: true},
 }
 
 var maxLineRE = regexp.MustCompile(`^[0-9]{1,3}$`)
@@ -52,12 +54,16 @@ type options struct {
 	hasShift   bool
 	stretch    ops.Ratio
 	hasStretch bool
-	sort       bool
-	dropEmpty  bool
-	stripTags  bool
-	cleanSpace bool
-	out        string
-	hasOut     bool
+	// minDuration is the --min-duration value in milliseconds.
+	minDuration int64
+	// hasMinDuration reports whether --min-duration was given.
+	hasMinDuration bool
+	sort           bool
+	dropEmpty      bool
+	stripTags      bool
+	cleanSpace     bool
+	out            string
+	hasOut         bool
 }
 
 func invalidValue(opt, value string) error {
@@ -144,6 +150,16 @@ func parseArgs(args []string) (options, error) {
 			return options{}, invalidValue(optStretch, v)
 		}
 		opts.stretch, opts.hasStretch = r, true
+	}
+	if v, given := raw[optMinDuration]; given {
+		if strings.HasPrefix(v, "+") || strings.HasPrefix(v, "-") {
+			return options{}, invalidValue(optMinDuration, v)
+		}
+		ms, ok := ops.ParseDuration(v)
+		if !ok || ms < 1 || ms > 60000 {
+			return options{}, invalidValue(optMinDuration, v)
+		}
+		opts.minDuration, opts.hasMinDuration = ms, true
 	}
 	opts.out, opts.hasOut = raw[optOut]
 	if len(opts.files) != 1 {
