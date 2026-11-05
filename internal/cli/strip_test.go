@@ -163,7 +163,7 @@ func TestStripTagsReadmeDocumentation(t *testing.T) {
 	}
 	readme := strings.ReplaceAll(string(data), "\r\n", "\n")
 
-	const usageLine = "       srtvet fix [--shift DURATION] [--stretch RATIO] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE"
+	const usageLine = "       srtvet fix [--shift DURATION] [--stretch RATIO] [--min-duration DURATION] [--sort] [--drop-empty] [--strip-tags] [--clean-space] [--out FILE] FILE"
 	if !strings.Contains(readme, usageLine) {
 		t.Errorf("README.md does not contain the fix usage line %q", usageLine)
 	}
@@ -183,11 +183,13 @@ func TestStripTagsReadmeDocumentation(t *testing.T) {
 		"3. `--stretch RATIO` multiplies every start and end by the ratio, rounded half\n" +
 		"   up to whole milliseconds.\n" +
 		"4. `--shift DURATION` adds the duration to every start and end.\n" +
-		"5. `--sort` sorts the cues by start, then by end; equal cues keep their file\n" +
+		"5. `--min-duration DURATION` lengthens the cues that last less than the duration\n" +
+		"   (see below).\n" +
+		"6. `--sort` sorts the cues by start, then by end; equal cues keep their file\n" +
 		"   order.\n" +
-		"6. The cues are renumbered 1, 2, 3, ... in their final order."
+		"7. The cues are renumbered 1, 2, 3, ... in their final order."
 	if fixingStart >= 0 && tagsStart > fixingStart && !strings.Contains(readme[fixingStart:tagsStart], fixSteps) {
-		t.Error("README.md does not document strip-tags as fix step 1 followed by steps 2 through 6")
+		t.Error("README.md does not document strip-tags as fix step 1 followed by steps 2 through 7")
 	}
 
 	const removedForms = "`--strip-tags` removes opening and closing `<i>`, `<b>`, `<u>`, `<s>` and `<font>` tags, without regard to case."
